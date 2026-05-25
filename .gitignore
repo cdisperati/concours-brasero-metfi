@@ -1,0 +1,11 @@
+# Secrets — jamais versionnés
+config.php
+
+# Données géocodées générées au runtime (table code postal -> coordonnées).
+# Régénérées automatiquement par l'app / build.mjs.
+postcodes.json
+
+# Divers
+*.local
+node_modules/
+.DS_Store
