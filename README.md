@@ -100,4 +100,41 @@ Canvas). Aucune dépendance JS externe (hors polices Google).
 
 ---
 
+## ✅ Vérifier l'équité (preuve par empreinte)
+
+À chaque chargement, la liste des participants est **figée** et la page calcule un
+**SHA-256 d'une liste pseudonymisée** (sans téléphone ni e-mail). La page affiche, en
+direct, sous les compteurs :
+
+> 🔒 Liste figée · *N* participants · *M* chances · *date/heure* · `SHA-256 …`
+
+**Déroulé pour une transparence vérifiable :**
+
+1. **Avant de tirer**, on publie publiquement (capture, post, commit) **l'empreinte
+   SHA-256 + le nombre de participants/chances** affichés.
+2. On télécharge la **« Preuve (.txt) »** (bouton sur la page) : c'est la liste figée,
+   une ligne par commande au format `id_commande;prenom;initiale;ville;nb_chances`.
+3. **Après le tirage**, on publie ce fichier.
+
+**N'importe qui peut alors vérifier**, avec des outils standard :
+
+```bash
+sha256sum concours-brasero-snapshot-XXXXXXXX.txt
+# => doit être EXACTEMENT l'empreinte annoncée avant le tirage
+```
+
+- Si l'empreinte correspond → la liste **n'a pas été modifiée** après l'engagement.
+- La somme de la dernière colonne (`nb_chances`) = nombre total de chances annoncé.
+- On peut recompter les chances de chacun (1 par t-shirt) et vérifier qu'aucun nom n'a
+  été ajouté/dupliqué/retiré.
+
+> ⚠️ Règle d'or : ne pas recharger la page entre l'annonce de l'empreinte et la fin des
+> tirages — un rechargement re-fige la liste (nouvelles commandes) et change l'empreinte.
+
+Le tirage lui-même s'exécute **dans le navigateur** (`Math.random()` sur la liste figée) :
+en ouvrant le code source de la page (Ctrl+U), on lit l'algorithme réellement exécuté, et
+il est identique à ce dépôt.
+
+---
+
 *Outil interne METFI. Publié pour la transparence du concours.*

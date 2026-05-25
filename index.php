@@ -159,13 +159,46 @@ if (isset($_GET['data'])) {
         }
     }
 
+    // 4) PREUVE D'ÉQUITÉ — empreinte SHA-256 d'une liste PSEUDONYMISÉE (sans tel/email).
+    //    Format public, vérifiable avec `sha256sum` : 1 ligne par commande,
+    //    "id_commande;prenom;initiale;ville;nb_chances". Trié par id_commande.
+    $agg = [];   // par commande : on ADDITIONNE les chances (une commande peut avoir plusieurs lignes du produit)
+    foreach ($rows as $row) {
+        $oid = (int)$row['id_order'];
+        $qty = max(1, (int)$row['qty']);
+        if (isset($agg[$oid])) { $agg[$oid]['qty'] += $qty; continue; }
+        $fn  = $row['firstname'] !== '' ? $row['firstname'] : 'Client';
+        $ln  = $row['lastname']  ?? '';
+        $ini = $ln !== '' ? mb_strtoupper(mb_substr($ln, 0, 1)) : '';
+        $city = str_replace([';', "\r", "\n"], [',', ' ', ' '], (string)$row['city']);
+        $agg[$oid] = ['fn' => $fn, 'ini' => $ini, 'city' => $city, 'qty' => $qty];
+    }
+    ksort($agg, SORT_NUMERIC);
+    $snapLines = [];
+    foreach ($agg as $oid => $a) { $snapLines[] = $oid . ';' . $a['fn'] . ';' . $a['ini'] . ';' . $a['city'] . ';' . $a['qty']; }
+    $genAt = date('c');
+    $canonical  = "# Concours Brasero METFI — snapshot participants (pseudonymisé)\n";
+    $canonical .= "# produit=" . PRODUCT_ID . " etats=" . PAID_STATES . "\n";
+    $canonical .= "# genere=" . $genAt . "\n";
+    $canonical .= "# participants=" . count($buyers) . " chances=" . count($entries) . "\n";
+    $canonical .= "# format: id_commande;prenom;initiale;ville;nb_chances\n";
+    $canonical .= implode("\n", array_values($snapLines)) . "\n";
+    $sha = hash('sha256', $canonical);
+
     echo json_encode([
         'product'       => 'T-Shirt — Concours Brasero METFI',
-        'generated_at'  => date('c'),
+        'generated_at'  => $genAt,
         'buyers'        => count($buyers),
         'total_chances' => count($entries),
         'entries'       => $entries,
         'pins'          => $pins,
+        'snapshot'      => [           // preuve d'équité (option A)
+            'sha256'       => $sha,
+            'participants' => count($buyers),
+            'chances'      => count($entries),
+            'generated_at' => $genAt,
+            'list'         => $canonical,   // texte exact dont le sha256 = empreinte ci-dessus
+        ],
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
@@ -215,6 +248,11 @@ h1{font-family:'Anton',sans-serif;font-weight:400;line-height:.9;font-size:clamp
 .stat b{font-family:'Anton',sans-serif;font-size:clamp(20px,2.4vw,34px);color:var(--ash)}
 .stat.hot b{color:var(--ember-hi)}
 .stat span{font-size:clamp(9px,.85vw,11px);letter-spacing:.22em;text-transform:uppercase;color:var(--ash-dim);margin-top:.45em}
+.proof{display:flex;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px;font-size:11px;color:var(--ash-dim)}
+.proof-tag{color:var(--ember-hi);font-weight:600;letter-spacing:.12em;text-transform:uppercase}
+#proof-hash{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10px;color:#a98c6e;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:6px;padding:3px 8px;max-width:48vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proof-btn{font-family:'Oswald';font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ash-dim);background:transparent;border:1px solid var(--line);border-radius:6px;padding:4px 9px;cursor:pointer}
+.proof-btn:hover{border-color:var(--ember);color:var(--ash)}
 
 /* Grid */
 .grid{flex:1 1 auto;display:grid;grid-template-columns:minmax(190px,20vw) 1fr minmax(300px,40vw);gap:clamp(12px,1.6vw,26px);min-height:0;margin-top:clamp(8px,1.4vh,18px)}
@@ -346,6 +384,13 @@ h1{font-family:'Anton',sans-serif;font-weight:400;line-height:.9;font-size:clamp
       <div class="stat"><b id="s-chances">—</b><span>Chances en jeu</span></div>
       <div class="stat"><b id="s-remain">—</b><span>Chances restantes</span></div>
       <div class="stat hot"><b id="s-prizes">10</b><span>Lots restants</span></div>
+    </div>
+    <div class="proof" id="proof" hidden>
+      <span class="proof-tag">🔒 Liste figée</span>
+      <span id="proof-meta"></span>
+      <code id="proof-hash" title="SHA-256 de la liste pseudonymisée — vérifiable avec sha256sum"></code>
+      <button class="proof-btn" id="proof-dl">⬇ Preuve (.txt)</button>
+      <button class="proof-btn" id="proof-copy">⧉ Copier l'empreinte</button>
     </div>
   </header>
 
@@ -634,6 +679,27 @@ $('#callbtn').addEventListener('click', ()=> $('#winp').classList.add('show')); 
 $('#close').addEventListener('click', ()=> hideWinner());
 addEventListener('resize', ()=>{ mapResize(); if(DATA) primeReels(); });
 
+// ----- Preuve d'équité (empreinte de la liste figée) -----
+function renderProof(s){
+  if(!s){ return; }
+  const t=new Date(s.generated_at).toLocaleString('fr-FR');
+  $('#proof-meta').textContent = `${s.participants.toLocaleString('fr-FR')} participants · ${s.chances.toLocaleString('fr-FR')} chances · ${t}`;
+  $('#proof-hash').textContent = 'SHA-256 '+s.sha256;
+  $('#proof').hidden=false;
+}
+$('#proof-dl').addEventListener('click', ()=>{
+  const s=DATA&&DATA.snapshot; if(!s) return;
+  const blob=new Blob([s.list],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='concours-brasero-snapshot-'+s.sha256.slice(0,8)+'.txt'; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+});
+$('#proof-copy').addEventListener('click', ()=>{
+  const s=DATA&&DATA.snapshot; if(!s) return;
+  if(navigator.clipboard) navigator.clipboard.writeText(s.sha256);
+  $('#proof-copy').textContent='✓ Copié'; setTimeout(()=>$('#proof-copy').textContent="⧉ Copier l'empreinte",1500);
+});
+
 // ----- Load -----
 async function load(){
   try{
@@ -646,7 +712,7 @@ async function load(){
     $('#s-buyers').textContent=d.buyers.toLocaleString('fr-FR');
     $('#s-chances').textContent=d.total_chances.toLocaleString('fr-FR');
     $('#pincount').textContent=PINS.length.toLocaleString('fr-FR')+' adresses';
-    rebuildPool(); renderLegend(); mapResize(); primeReels(); showQ();
+    rebuildPool(); renderLegend(); mapResize(); primeReels(); showQ(); renderProof(d.snapshot);
     $('#drawPrize').disabled=false;
     $('#note').textContent=`Prêt — ${d.total_chances.toLocaleString('fr-FR')} chances · ${prizesLeft()} lots. Étape 1 : tire le lot 🎁`;
   }catch(err){ $('#note').textContent='Erreur de chargement : '+err.message; }
