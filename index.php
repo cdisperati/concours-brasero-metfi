@@ -334,6 +334,26 @@ h1{font-family:'Anton',sans-serif;font-weight:400;line-height:.9;font-size:clamp
 .opts input{accent-color:var(--ember);width:16px;height:16px}
 .note{font-size:11px;color:#7a6450;letter-spacing:.04em;text-align:center}
 
+/* Encart caméra (recouvert par la caméra dans OBS) */
+.camzone{flex:0 0 auto;display:flex;justify-content:center;align-items:flex-end;height:clamp(200px,29vh,340px);padding-top:10px}
+.cam-encart{position:relative;height:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;text-align:center;
+  border:2px dashed rgba(255,140,40,.45);background:linear-gradient(180deg,rgba(8,4,2,.9),rgba(20,9,4,.9));
+  display:flex;align-items:center;justify-content:center;box-shadow:0 14px 44px rgba(0,0,0,.55)}
+.cam-tag{position:absolute;top:8px;left:12px;font-family:'Oswald';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ash-dim)}
+.cam-corner{position:absolute;width:22px;height:22px;border:3px solid var(--ember-hi);opacity:.85}
+.cam-corner.tl{top:8px;left:8px;border-right:0;border-bottom:0}
+.cam-corner.tr{top:8px;right:8px;border-left:0;border-bottom:0}
+.cam-corner.bl{bottom:8px;left:8px;border-right:0;border-top:0}
+.cam-corner.br{bottom:8px;right:8px;border-left:0;border-top:0}
+.cam-hint{font-family:'Anton';text-transform:uppercase;letter-spacing:.1em;color:#5a3a22;font-size:clamp(20px,2.4vw,34px)}
+.cam-info{display:none;flex-direction:column;gap:6px;padding:16px}
+.cam-info.show{display:flex} .cam-info.show ~ .cam-hint,.cam-encart.filled .cam-hint{display:none}
+.cam-lab{font-family:'Oswald';font-weight:600;font-size:clamp(11px,1.2vw,14px);letter-spacing:.14em;text-transform:uppercase;color:var(--ember-hi)}
+.cam-name{font-family:'Anton';text-transform:uppercase;font-size:clamp(20px,2.6vw,38px);color:#fff;line-height:1}
+.cam-tel{font-family:'Anton';font-size:clamp(30px,5vw,66px);color:#fff;line-height:1.05;text-shadow:var(--win-glow)}
+.cam-tel a{color:inherit;text-decoration:none}
+.cam-email{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:clamp(13px,1.7vw,22px);color:var(--gold);word-break:break-all}
+
 /* Map */
 .col-map{align-items:stretch}
 .map-frame{position:relative;flex:1 1 auto;min-height:0;border-radius:20px;overflow:hidden;border:1px solid rgba(255,140,40,.22);
@@ -411,28 +431,8 @@ h1{font-family:'Anton',sans-serif;font-weight:400;line-height:.9;font-size:clamp
           <button class="btn btn-fire" id="drawPrize" disabled>🎁 1. Tirer le lot</button>
           <button class="btn btn-fire" id="drawWinner" disabled>🎟️ 2. Tirer le gagnant</button>
         </div>
-        <button class="btn btn-call" id="callbtn" hidden>
-          <svg viewBox="0 0 24 24"><path d="M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.24 11.4 11.4 0 0 0 3.6.58 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.46.58 3.6a1 1 0 0 1-.25 1z"/></svg>
-          Appeler le gagnant
-        </button>
         <label class="opts"><input type="checkbox" id="exclude" checked> Retirer les gagnants déjà tirés</label>
         <div class="note" id="note">Chargement…</div>
-      </div>
-      <!-- panneau résultat — ouvert au clic sur « Appeler » -->
-      <div class="winner-panel" id="winp">
-        <div class="wp-lab">🔥 Gagnant 🔥</div>
-        <div class="wp-name" id="wp-name"></div>
-        <div class="wp-city" id="wp-city"></div>
-        <div class="wp-prize" id="wp-prize"></div>
-        <div class="wp-actions">
-          <div class="phone-box show" id="phonebox">
-            <div class="phone-num"><a id="tel-link" href="#"></a></div>
-            <div class="phone-meta" id="email-meta"></div>
-          </div>
-          <div class="wp-foot">
-            <button class="btn btn-ghost" id="close">Fermer</button>
-          </div>
-        </div>
       </div>
     </section>
 
@@ -442,6 +442,23 @@ h1{font-family:'Anton',sans-serif;font-weight:400;line-height:.9;font-size:clamp
       <div class="map-frame"><canvas id="map"></canvas><div class="maplabel" id="maplabel"></div></div>
     </section>
   </main>
+
+  <!-- ENCART CAMÉRA (16:9). Dans OBS, la caméra est posée par-dessus ce cadre :
+       les viewers voient la caméra, PAS les coordonnées. Sur l'écran de régie (sans
+       la vidéo), on lit le téléphone + email du gagnant qui s'affichent ici. -->
+  <div class="camzone">
+    <div class="cam-encart" id="cam">
+      <span class="cam-corner tl"></span><span class="cam-corner tr"></span><span class="cam-corner bl"></span><span class="cam-corner br"></span>
+      <span class="cam-tag">📷 Encart caméra · overlay OBS · 16:9</span>
+      <div class="cam-hint" id="cam-hint">Zone caméra</div>
+      <div class="cam-info" id="cam-info">
+        <div class="cam-lab">📞 Coordonnées du gagnant — régie uniquement</div>
+        <div class="cam-name" id="cam-name"></div>
+        <div class="cam-tel"><a id="cam-tel" href="#"></a></div>
+        <div class="cam-email" id="cam-email"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Templates de cartes-lots (clonés en JS, pas d'innerHTML dynamique) -->
@@ -610,7 +627,7 @@ const hideQ=()=>{ $('#qmark').classList.remove('show'); $('#frame').classList.re
 async function drawPrize(){
   if(spinning || !DATA) return;
   if(prizesLeft()===0){ $('#note').textContent='Tous les lots ont été attribués 🎉'; return; }
-  spinning=true; $('#drawPrize').disabled=true; $('#drawWinner').disabled=true; $('#callbtn').hidden=true; hideWinner();
+  spinning=true; $('#drawPrize').disabled=true; $('#drawWinner').disabled=true; camReset();
   showQ(); if(winnerPin) mapZoomOut(); $('#maplabel').classList.remove('show');   // gagnant encore inconnu
   SFX.whoosh(1.0);
 
@@ -629,7 +646,7 @@ async function drawPrize(){
 async function drawWinner(){
   if(spinning || !DATA || !currentPrize) return;
   if(pool.length===0){ $('#note').textContent='Plus aucun participant en jeu.'; return; }
-  spinning=true; $('#drawWinner').disabled=true; $('#drawPrize').disabled=true; $('#callbtn').hidden=true; hideWinner();
+  spinning=true; $('#drawWinner').disabled=true; $('#drawPrize').disabled=true; camReset();
   hideQ(); if(winnerPin) mapZoomOut(); $('#maplabel').classList.remove('show');   // on révèle la roulette
   SFX.whoosh(1.3);
 
@@ -650,33 +667,30 @@ async function drawWinner(){
   burst(); SFX.win();
   mapZoomTo(winner.lat, winner.lon);
   if(winner.city){ $('#maplabel').textContent=winner.city; $('#maplabel').classList.add('show'); }
-  prepareWinner(winner, currentPrize);
-  $('#callbtn').hidden=false;                       // le bouton Appeler apparaît à la fin
-  $('#note').textContent='Clique sur « Appeler » pour révéler le numéro.';
+  fillCam(winner);                                  // tel + email dans l'encart caméra (régie)
+  $('#note').textContent='Coordonnées affichées dans l’encart caméra (visibles seulement en régie).';
   currentPrize=null; spinning=false;
   $('#drawPrize').disabled = (prizesLeft()===0 || pool.length===0);
 }
 
 function rebuildPool(){ pool=[]; DATA.entries.forEach((e,i)=>{ if(!wonKeys.has((e.email||'').toLowerCase())) pool.push(i); }); $('#s-remain').textContent=pool.length.toLocaleString('fr-FR'); }
 
-// remplit le panneau (nom + 📍 ville + lot + numéro) SANS l'afficher
-function prepareWinner(w, prize){
-  renderName($('#wp-name'), w);
-  $('#wp-city').textContent = w.city ? ('📍 ' + w.city + (w.lat?'':' · (hors carte)')) : '📍 Localisation inconnue';
-  const wp=$('#wp-prize'); wp.replaceChildren();
-  wp.appendChild(clonePrize(prize.id,false));   // la carte contient déjà icône + nom + sous-titre
+// Encart caméra : affiche tel + email du gagnant (visible seulement en régie, la caméra
+// OBS recouvre cette zone pour les viewers). Nom complet indisponible côté client
+// (pseudonymisé) → on montre prénom + initiale + ville pour identifier qui appeler.
+function fillCam(w){
+  $('#cam-name').textContent = `${w.firstname}${w.initial?' '+w.initial+'.':''}${w.city?' · '+w.city:''}`;
   const tel=(w.tel||'').replace(/\s+/g,'');
-  $('#tel-link').textContent=formatTel(w.tel); $('#tel-link').href=tel?'tel:'+tel:'#';
-  $('#email-meta').textContent=w.email||'';
+  const a=$('#cam-tel'); a.textContent=formatTel(w.tel); a.href = tel ? 'tel:'+tel : '#';
+  $('#cam-email').textContent = w.email||'';
+  $('#cam-info').classList.add('show'); $('#cam').classList.add('filled');
 }
-function hideWinner(){ $('#winp').classList.remove('show'); }
+function camReset(){ $('#cam-info').classList.remove('show'); $('#cam').classList.remove('filled'); }
 function formatTel(t){ if(!t) return 'Numéro indisponible'; const d=t.replace(/\D/g,''); if(d.length===10) return d.replace(/(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/,'$1 $2 $3 $4 $5'); return t; }
 
 // ----- Events -----
 $('#drawPrize').addEventListener('click', drawPrize);
 $('#drawWinner').addEventListener('click', drawWinner);
-$('#callbtn').addEventListener('click', ()=> $('#winp').classList.add('show'));   // ouvre le panneau (numéro)
-$('#close').addEventListener('click', ()=> hideWinner());
 addEventListener('resize', ()=>{ mapResize(); if(DATA) primeReels(); });
 
 // ----- Preuve d'équité (empreinte de la liste figée) -----
