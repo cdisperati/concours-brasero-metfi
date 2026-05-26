@@ -334,10 +334,10 @@ h1{font-family:'Anton',sans-serif;font-weight:400;line-height:.9;font-size:clamp
 .opts input{accent-color:var(--ember);width:16px;height:16px}
 .note{font-size:11px;color:#7a6450;letter-spacing:.04em;text-align:center}
 
-/* Encart caméra (recouvert par la caméra dans OBS) */
-.camzone{flex:0 0 auto;display:flex;justify-content:center;align-items:flex-end;height:clamp(200px,29vh,340px);padding-top:10px}
-.cam-encart{position:relative;height:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;text-align:center;
-  border:2px dashed rgba(255,140,40,.45);background:linear-gradient(180deg,rgba(8,4,2,.9),rgba(20,9,4,.9));
+/* Encart caméra (recouvert par la caméra dans OBS) — intégré sous les boutons */
+.cam-encart{position:relative;flex:0 0 auto;align-self:center;height:clamp(150px,28vh,330px);aspect-ratio:16/9;max-width:100%;margin:12px auto 0;
+  border-radius:14px;overflow:hidden;text-align:center;border:2px dashed rgba(255,140,40,.45);
+  background:linear-gradient(180deg,rgba(8,4,2,.9),rgba(20,9,4,.9));
   display:flex;align-items:center;justify-content:center;box-shadow:0 14px 44px rgba(0,0,0,.55)}
 .cam-tag{position:absolute;top:8px;left:12px;font-family:'Oswald';font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ash-dim)}
 .cam-corner{position:absolute;width:22px;height:22px;border:3px solid var(--ember-hi);opacity:.85}
@@ -434,31 +434,27 @@ h1{font-family:'Anton',sans-serif;font-weight:400;line-height:.9;font-size:clamp
         <label class="opts"><input type="checkbox" id="exclude" checked> Retirer les gagnants déjà tirés</label>
         <div class="note" id="note">Chargement…</div>
       </div>
+      <!-- ENCART CAMÉRA (16:9) intégré sous les boutons. Dans OBS la caméra se pose
+           par-dessus : les viewers voient la caméra, pas les coordonnées (lues en régie). -->
+      <div class="cam-encart" id="cam">
+        <span class="cam-corner tl"></span><span class="cam-corner tr"></span><span class="cam-corner bl"></span><span class="cam-corner br"></span>
+        <span class="cam-tag">📷 Caméra · overlay OBS · 16:9</span>
+        <div class="cam-hint" id="cam-hint">Zone caméra</div>
+        <div class="cam-info" id="cam-info">
+          <div class="cam-lab">📞 Coordonnées du gagnant — régie uniquement</div>
+          <div class="cam-name" id="cam-name"></div>
+          <div class="cam-tel"><a id="cam-tel" href="#"></a></div>
+          <div class="cam-email" id="cam-email"></div>
+        </div>
+      </div>
     </section>
 
-    <!-- RIGHT : carte -->
+    <!-- RIGHT : carte (toute la hauteur) -->
     <section class="col col-map">
       <h2 class="coltitle">Les participants · <b id="pincount">—</b></h2>
       <div class="map-frame"><canvas id="map"></canvas><div class="maplabel" id="maplabel"></div></div>
     </section>
   </main>
-
-  <!-- ENCART CAMÉRA (16:9). Dans OBS, la caméra est posée par-dessus ce cadre :
-       les viewers voient la caméra, PAS les coordonnées. Sur l'écran de régie (sans
-       la vidéo), on lit le téléphone + email du gagnant qui s'affichent ici. -->
-  <div class="camzone">
-    <div class="cam-encart" id="cam">
-      <span class="cam-corner tl"></span><span class="cam-corner tr"></span><span class="cam-corner bl"></span><span class="cam-corner br"></span>
-      <span class="cam-tag">📷 Encart caméra · overlay OBS · 16:9</span>
-      <div class="cam-hint" id="cam-hint">Zone caméra</div>
-      <div class="cam-info" id="cam-info">
-        <div class="cam-lab">📞 Coordonnées du gagnant — régie uniquement</div>
-        <div class="cam-name" id="cam-name"></div>
-        <div class="cam-tel"><a id="cam-tel" href="#"></a></div>
-        <div class="cam-email" id="cam-email"></div>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- Templates de cartes-lots (clonés en JS, pas d'innerHTML dynamique) -->
